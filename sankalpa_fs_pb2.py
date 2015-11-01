@@ -17,7 +17,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='sankalpa_fs.proto',
   package='sankalpafs',
   syntax='proto3',
-  serialized_pb=b'\n\x11sankalpa_fs.proto\x12\nsankalpafs\"\x14\n\x04Path\x12\x0c\n\x04path\x18\x01 \x01(\t\"\x1b\n\x05MTime\x12\x12\n\nversion_no\x18\x01 \x01(\r\"\x1a\n\x07\x43ontent\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\x0c\"\x1d\n\x08NumBytes\x12\x11\n\tnum_bytes\x18\x01 \x01(\x03\"\x18\n\x06Status\x12\x0e\n\x06status\x18\x01 \x01(\r2\xf0\x01\n\nSankalpaFS\x12\x32\n\tget_mtime\x12\x10.sankalpafs.Path\x1a\x11.sankalpafs.MTime\"\x00\x12>\n\x11get_file_contents\x12\x10.sankalpafs.Path\x1a\x13.sankalpafs.Content\"\x00\x30\x01\x12<\n\x0bupdate_file\x12\x13.sankalpafs.Content\x1a\x14.sankalpafs.NumBytes\"\x00(\x01\x12\x30\n\x06\x64\x65lete\x12\x10.sankalpafs.Path\x1a\x12.sankalpafs.Status\"\x00\x42\x0f\n\x07\x65x.grpc\xa2\x02\x03RTGb\x06proto3'
+  serialized_pb=b'\n\x11sankalpa_fs.proto\x12\nsankalpafs\"\x14\n\x04Path\x12\x0c\n\x04path\x18\x01 \x01(\t\"\x16\n\x05MTime\x12\r\n\x05mtime\x18\x01 \x01(\x02\"\x1a\n\x07\x43ontent\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\x0c\"\x1d\n\x08NumBytes\x12\x11\n\tnum_bytes\x18\x01 \x01(\x03\"\x18\n\x06Status\x12\x0e\n\x06status\x18\x01 \x01(\r2\xf0\x01\n\nSankalpaFS\x12\x32\n\tget_mtime\x12\x10.sankalpafs.Path\x1a\x11.sankalpafs.MTime\"\x00\x12>\n\x11get_file_contents\x12\x10.sankalpafs.Path\x1a\x13.sankalpafs.Content\"\x00\x30\x01\x12<\n\x0bupdate_file\x12\x13.sankalpafs.Content\x1a\x14.sankalpafs.NumBytes\"\x00(\x01\x12\x30\n\x06\x64\x65lete\x12\x10.sankalpafs.Path\x1a\x12.sankalpafs.Status\"\x00\x42\x0f\n\x07\x65x.grpc\xa2\x02\x03RTGb\x06proto3'
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -63,8 +63,8 @@ _MTIME = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='version_no', full_name='sankalpafs.MTime.version_no', index=0,
-      number=1, type=13, cpp_type=3, label=1,
+      name='mtime', full_name='sankalpafs.MTime.mtime', index=0,
+      number=1, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -82,7 +82,7 @@ _MTIME = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=55,
-  serialized_end=82,
+  serialized_end=77,
 )
 
 
@@ -112,8 +112,8 @@ _CONTENT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=84,
-  serialized_end=110,
+  serialized_start=79,
+  serialized_end=105,
 )
 
 
@@ -143,8 +143,8 @@ _NUMBYTES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=112,
-  serialized_end=141,
+  serialized_start=107,
+  serialized_end=136,
 )
 
 
@@ -174,8 +174,8 @@ _STATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=167,
+  serialized_start=138,
+  serialized_end=162,
 )
 
 DESCRIPTOR.message_types_by_name['Path'] = _PATH
