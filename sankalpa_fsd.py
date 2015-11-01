@@ -23,7 +23,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
 
     def get_mtime(self, Path):
         print '********** in get_mtime ************'
-        return self.stat(os.path.join(self.__base_dir, Path.path)).st_mtime
+        return os.stat(os.path.join(self.__base_dir, Path.path)).st_mtime
 
     def get_file_contents(self, Path):
         with open(os.path.join(self.__base_dir, Path.path, 'rb')) as fo:
