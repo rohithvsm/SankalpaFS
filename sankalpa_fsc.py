@@ -26,6 +26,8 @@ stub = None
 mount_point = None
 root = None
 
+_TIMEOUT_SECONDS = 30
+
 if not hasattr(fuse, '__version__'):
     raise RuntimeError, \
         "your fuse-py doesn't know of fuse.__version__, probably it's too old."
@@ -176,18 +178,18 @@ class Xmp(Fuse):
 
         def __init__(self, path, flags, *mode):
 
-            proto_path = sankalpa_fs_pb2.Path(path)
-            server_mtime = stub.get_mtime(proto_path)
+            proto_path = sankalpa_fs_pb2.Path(path=path)
+            server_mtime = stub.get_mtime(proto_path, _TIMEOUT_SECONDS)
             root_path = _full_path(root, path)
             try:
                 client_mtime = os.stat(root_path)
             except OSError as ose:
                 if ose.errno == 2:
                     client_mtime = 0
-            if server_mtime > client_mtime:
+            if server_mtime.mtime > client_mtime:
                 # TODO: incremental updates with rsync
                 with open(root_path, 'wb') as wfo:
-                    for content in stub.get_file_contents(proto_path):
+                    for content in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                         wfo.write(content)
                 # keep the client mtime in sync with server due to
                 # network delays
@@ -282,7 +284,7 @@ def main():
 
     global stub, mount_point, root
 
-    channel = implementations.insecure_channel('', 50051)
+    channel = implementations.insecure_channel('pc-c220m4-r03-19.wisc.cloudlab.us', 50051)
     stub = sankalpa_fs_pb2.beta_create_SankalpaFS_stub(channel)
 
     usage = """
