@@ -1,7 +1,9 @@
 """The Python implementation of the gRPC Sankalpa FS server."""
 
+import sys
 import sankalpa_fs_pb2
 import os
+import time
 
 #TODO:
 # version number as extended file attributes
@@ -20,10 +22,11 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         self.__stream_packet_size -= 24  # Ethernet header size
 
     def get_mtime(self, Path):
+        print '********** in get_mtime ************'
         return self.stat(os.path.join(self.__base_dir, Path.path)).st_mtime
 
     def get_file_contents(self, Path):
-        with open(os.path.join(self.__base_dir, Path.path, 'rb') as fo:
+        with open(os.path.join(self.__base_dir, Path.path, 'rb')) as fo:
             while True:
                 byte_stream = fo.read(self.__stream_packet_size)
                 if byte_stream:
@@ -47,17 +50,20 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                                                            ,file_name))
 
     def delete(self, Path):
-        os.remove(os.path.join(self.__base_dir, Path.path)
+        os.remove(os.path.join(self.__base_dir, Path.path))
         
 def serve():
-  server = sankalpa_fs_pb2.beta_create_SankalpaFS_server(SankalpaFSServicer())
-  server.add_insecure_port('[::]:50051')
-  server.start()
-  try:
-    while True:
-      time.sleep(1)
-  except KeyboardInterrupt:
-    server.stop()
+    storage_dir = sys.argv[1]
+    if not os.path.exists(storage_dir):
+        os.makedirs(storage_dir)
+    server = sankalpa_fs_pb2.beta_create_SankalpaFS_server(SankalpaFSServicer(sys.argv[1]))
+    server.add_insecure_port('[::]:50051')
+    server.start()
+    try:
+        while True:
+            time.sleep(24 * 60 * 60)
+    except KeyboardInterrupt:
+        server.stop()
 
 if __name__ == '__main__':
-  serve()
+    serve()
