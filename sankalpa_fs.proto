@@ -21,7 +21,7 @@ message Path {
 }
 
 message MTime {
-  uint32 version_no = 1;
+  uint32 mtime = 1;
 }
 
 message Content {
