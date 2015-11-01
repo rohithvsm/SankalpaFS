@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option java_package = "ex.grpc";
+option objc_class_prefix = "RTG";
+
+package sankalpafs;
+
+// Interface exported by the server.
+service SankalpaFS {
+  rpc get_mtime(Path) returns (MTime) {}
+
+  rpc get_file_contents(Path) returns (stream Content) {}
+
+  rpc update_file(stream Content) returns (NumBytes) {}
+
+  rpc delete(Path) returns (Status) {}
+}
+
+message Path {
+  string path = 1;
+}
+
+message MTime {
+  uint32 version_no = 1;
+}
+
+message Content {
+  bytes content = 1;
+}
+
+message NumBytes {
+  int64 num_bytes = 1;
+}
+
+message Status {
+  uint32 status = 1;
+}
