@@ -4,11 +4,17 @@ import sys
 import sankalpa_fs_pb2
 import os
 import time
+import tempfile
 
 #TODO:
 # version number as extended file attributes
 # Multiple clients
 # Exception handling
+
+def _full_path(base_path, relative_path):
+    if relative_path.startswith('/'):
+        relative_path = relative_path[1:]
+    return os.path.join(base_path, relative_path)
 
 class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
     """Provides methods that implement functionality of Sankalpa FS server."""
@@ -21,11 +27,16 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         self.__stream_packet_size -= 192  # maximum IPv4 header size
         self.__stream_packet_size -= 24  # Ethernet header size
 
-    def get_mtime(self, Path):
+    def get_mtime(self, Path, context):
         print '********** in get_mtime ************'
-        return os.stat(os.path.join(self.__base_dir, Path.path)).st_mtime
+        print '********** %s' % self.__base_dir
+        print '********** %s' % Path.path
+        print '********** %s' % _full_path(self.__base_dir, Path.path)
+        mt = os.stat(_full_path(self.__base_dir, Path.path)).st_mtime 
+        print mt
+        return sankalpa_fs_pb2.MTime(mtime=mt) 
 
-    def get_file_contents(self, Path):
+    def get_file_contents(self, Path, context):
         with open(os.path.join(self.__base_dir, Path.path, 'rb')) as fo:
             while True:
                 byte_stream = fo.read(self.__stream_packet_size)
@@ -34,22 +45,22 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                 else:
                     break
 
-    def update_file(self, File):
+    def update_file(self, Content, context):
         file_name = None
 
         with tempfile.NamedTemporaryFile() as temp:
             counter = 0
             # TODO: try multiple for loops and slicing
-            for cont in content:
+            for cont in Content:
                 if counter == 0:
                     file_name = cont
                     counter += 1
                     continue
-                temp.write(File.content)
-            os.rename(NamedTemporaryFile.name, os.path.join(self.__base_dir
+                temp.write(Content.content)
+            os.rename(tempfile.NamedTemporaryFile.name, os.path.join(self.__base_dir
                                                            ,file_name))
 
-    def delete(self, Path):
+    def delete(self, Path, context):
         os.remove(os.path.join(self.__base_dir, Path.path))
         
 def serve():
