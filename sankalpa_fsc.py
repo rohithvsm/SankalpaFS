@@ -189,8 +189,8 @@ class Xmp(Fuse):
             if server_mtime.mtime > client_mtime:
                 # TODO: incremental updates with rsync
                 with open(root_path, 'wb') as wfo:
-                    for content in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
-                        wfo.write(content)
+                    for cont in stub.get_file_content(proto_path, _TIMEOUT_SECONDS):
+                        wfo.write(cont.content)
                 # keep the client mtime in sync with server due to
                 # network delays
                 os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
