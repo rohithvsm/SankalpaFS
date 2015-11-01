@@ -46,9 +46,9 @@ def flag2mode(flags):
 
     return m
 
-def _full_path(self, base_path, relative_path):
-    if partial.startswith('/'):
-        partial = partial[1:]
+def _full_path(base_path, relative_path):
+    if relative_path.startswith('/'):
+        relative_path = relative_path[1:]
     return os.path.join(base_path, relative_path)
 
 
@@ -178,8 +178,12 @@ class Xmp(Fuse):
 
         def __init__(self, path, flags, *mode):
 
+            print '****************************************** %s' % path
             proto_path = sankalpa_fs_pb2.Path(path=path)
             server_mtime = stub.get_mtime(proto_path, _TIMEOUT_SECONDS)
+            print server_mtime
+            print server_mtime.mtime
+            '''
             root_path = _full_path(root, path)
             try:
                 client_mtime = os.stat(root_path)
@@ -194,6 +198,7 @@ class Xmp(Fuse):
                 # keep the client mtime in sync with server due to
                 # network delays
                 os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
+            '''
             self.file = os.fdopen(os.open("." + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
