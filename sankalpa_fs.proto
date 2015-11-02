@@ -30,7 +30,7 @@ message Content {
 
 message UpdateAck {
   string file_path = 1;
-  int64 num_bytes = 1;
+  int64 num_bytes = 2;
 }
 
 message Status {
