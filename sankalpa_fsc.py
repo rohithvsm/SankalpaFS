@@ -211,7 +211,7 @@ class Xmp(Fuse):
             print '********************************Server_mtime %s' % server_mtime
             if server_mtime != 0:
                 client_mtime = self.get_client_mtime(root_path)
-                print '***********************************Path %s' % client_mtime
+                print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
                     self.get_remote_file(root_path, proto_path)
