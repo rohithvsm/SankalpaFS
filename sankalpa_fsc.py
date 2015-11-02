@@ -176,29 +176,37 @@ class Xmp(Fuse):
 
     class XmpFile(object):
 
-        def __init__(self, path, flags, *mode):
+        def get_server_mtime(self, proto_path):
+            return stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
 
-            print '****************************************** %s' % path
-            proto_path = sankalpa_fs_pb2.Path(path=path)
-            server_mtime = stub.get_mtime(proto_path, _TIMEOUT_SECONDS)
-            print server_mtime
-            print server_mtime.mtime
-            '''
-            root_path = _full_path(root, path)
+        def get_client_mtime(self, root_path):
             try:
-                client_mtime = os.stat(root_path)
+                client_mtime = os.stat(root_path).st_mtime
             except OSError as ose:
                 if ose.errno == 2:
                     client_mtime = 0
-            if server_mtime.mtime > client_mtime:
-                # TODO: incremental updates with rsync
-                with open(root_path, 'wb') as wfo:
-                    for cont in stub.get_file_content(proto_path, _TIMEOUT_SECONDS):
-                        wfo.write(cont.content)
-                # keep the client mtime in sync with server due to
-                # network delays
-                os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
-            '''
+            return client_mtime
+
+        def get_remote_file(self, root_path, proto_path):
+            # TODO: incremental updates with rsync
+            with open(root_path, 'wb') as wfo:
+                for cont in stub.get_file_content(proto_path, _TIMEOUT_SECONDS):
+                    wfo.write(cont.content)
+
+        def __init__(self, path, flags, *mode):
+            print '****************************************** OPEN'
+            print '***********************************Path %s' % path
+            proto_path = sankalpa_fs_pb2.Path(path=path)
+            server_mtime = self.get_server_mtime(self, proto_path)
+            print '********************************Server_mtime %s' % server_mtime
+            if server_mtime != 0:
+                root_path = _full_path(root, path)
+                client_mtime = self.get_client_mtime(self, root_path)
+                if server_mtime > client_mtime:
+                    self.get_remote_file(self, root_path, proto_path)
+                    # keep the client mtime in sync with server due to
+                    # network delays
+                    os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
             self.file = os.fdopen(os.open("." + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()

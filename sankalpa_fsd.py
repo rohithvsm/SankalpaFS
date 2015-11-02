@@ -1,6 +1,7 @@
 """The Python implementation of the gRPC Sankalpa FS server."""
 
 import sys
+import errno
 import sankalpa_fs_pb2
 import os
 import time
@@ -29,11 +30,13 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
 
     def get_mtime(self, Path, context):
         print '********** in get_mtime ************'
-        print '********** %s' % self.__base_dir
-        print '********** %s' % Path.path
         print '********** %s' % _full_path(self.__base_dir, Path.path)
-        mt = os.stat(_full_path(self.__base_dir, Path.path)).st_mtime 
-        print mt
+        try:
+            mt = os.stat(_full_path(self.__base_dir, Path.path)).st_mtime
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                mt = 0
+        print '********** %s' % mt
         return sankalpa_fs_pb2.MTime(mtime=mt) 
 
     def get_file_contents(self, Path, context):
