@@ -250,9 +250,9 @@ class Xmp(Fuse):
             print '********** update_remote_file ************'
             content_iter = self.read_file_contents()
             ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
-            #if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
-            #    print '********** File Update Error ************'
-            #    raise OSError("File Update Error")
+            if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
+               print '********** File Update Error ************'
+               raise OSError("File Update Error")
 
         def release(self, flags):
             print '********** RELEASE ************'

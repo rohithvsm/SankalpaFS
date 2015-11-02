@@ -67,8 +67,9 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             print '********** update_file name %s' % file_path
             os.rename(temp.name, file_path)
             #TODO : DO we need to return numb_bytes ?
-            print '********** update_file size %s' % os.stat(file_path).st_size
-            return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel, num_bytes=os.stat(file_path).st_size)
+            print '********** update_file temp size %s' % os.stat(temp.name).st_size
+        print '********** update_file size %s' % os.stat(file_path).st_size
+        return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel, num_bytes=os.stat(file_path).st_size)
 
     def delete(self, Path, context):
         os.remove(os.path.join(self.__base_dir, Path.path))
