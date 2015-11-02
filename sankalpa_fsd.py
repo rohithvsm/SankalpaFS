@@ -53,7 +53,8 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
     def update_file(self, Content_iter, context):
         file_path_rel = None
         print '********** update_file ************'
-        with tempfile.NamedTemporaryFile() as temp:
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
+            temp_filename = temp.name
             counter = 0
             # TODO: try multiple for loops and slicing
             for cont in Content_iter:
@@ -62,12 +63,12 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                     counter += 1
                     continue
                 temp.write(cont.content)
-            print '********** update_file name %s' % file_path_rel
-            file_path = _full_path(self.__base_dir, file_path_rel)
-            print '********** update_file name %s' % file_path
-            os.rename(temp.name, file_path)
-            #TODO : DO we need to return numb_bytes ?
-            print '********** update_file temp size %s' % os.stat(temp.name).st_size
+            print '********** update_file temp file name %s' % temp.name
+        print '********** update_file name %s' % file_path_rel
+        file_path = _full_path(self.__base_dir, file_path_rel)
+        print '********** update_file name %s' % file_path
+        os.rename(temp_filename, file_path)
+        #TODO : DO we need to return numb_bytes ?
         print '********** update_file size %s' % os.stat(file_path).st_size
         return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel, num_bytes=os.stat(file_path).st_size)
 
