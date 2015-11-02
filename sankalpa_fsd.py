@@ -22,7 +22,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
 
     def __init__(self, storage_dir):
         self.__base_dir = storage_dir
-
+        #TODO: check for correct value
         self.__stream_packet_size = 64 * 1024  # TCP packet size
         self.__stream_packet_size -= 60  # maximum TCP header size
         self.__stream_packet_size -= 192  # maximum IPv4 header size
@@ -40,7 +40,9 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         return sankalpa_fs_pb2.MTime(mtime=mt) 
 
     def get_file_contents(self, Path, context):
-        with open(os.path.join(self.__base_dir, Path.path, 'rb')) as fo:
+        print '********** in get_file_contents ************'
+        print '********** %s' % _full_path(self.__base_dir, Path.path)
+        with open(_full_path(self.__base_dir, Path.path), 'rb') as fo:
             while True:
                 byte_stream = fo.read(self.__stream_packet_size)
                 if byte_stream:
