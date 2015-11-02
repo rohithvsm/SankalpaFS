@@ -8,6 +8,7 @@
 #
 
 from grpc.beta import implementations
+import errno
 import sankalpa_fs_pb2
 
 import os, sys
@@ -183,7 +184,7 @@ class Xmp(Fuse):
             try:
                 client_mtime = os.stat(root_path).st_mtime
             except OSError as ose:
-                if ose.errno == 2:
+                if ose.errno == errno.ENOENT:
                     client_mtime = 0
             return client_mtime
 
@@ -197,13 +198,13 @@ class Xmp(Fuse):
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
             proto_path = sankalpa_fs_pb2.Path(path=path)
-            server_mtime = self.get_server_mtime(self, proto_path)
+            server_mtime = self.get_server_mtime(proto_path)
             print '********************************Server_mtime %s' % server_mtime
             if server_mtime != 0:
                 root_path = _full_path(root, path)
-                client_mtime = self.get_client_mtime(self, root_path)
+                client_mtime = self.get_client_mtime(root_path)
                 if server_mtime > client_mtime:
-                    self.get_remote_file(self, root_path, proto_path)
+                    self.get_remote_file(root_path, proto_path)
                     # keep the client mtime in sync with server due to
                     # network delays
                     os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
