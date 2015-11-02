@@ -253,6 +253,11 @@ class Xmp(Fuse):
             if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
                print '********** File Update Error ************'
                raise OSError("File Update Error")
+            else:
+                # Setting the mtime in client to reflect the server
+                # This avoid a fetch call after every update
+                print '********** File Update mtime ************'
+                os.utime(self.root_path, (os.stat(self.root_path).st_atime, ack.server_mtime.mtime))
 
         def release(self, flags):
             print '********** RELEASE ************'
