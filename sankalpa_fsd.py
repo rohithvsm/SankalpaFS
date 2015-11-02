@@ -42,11 +42,11 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
     def get_file_contents(self, Path, context):
         print '********** in get_file_contents ************'
         print '********** %s' % _full_path(self.__base_dir, Path.path)
-        with open(_full_path(self.__base_dir, Path.path), 'rb') as fo:
+        with open(_full_path(self.__base_dir, Path.path), 'r') as fo:
             while True:
-                byte_stream = fo.read(self.__stream_packet_size)
-                if byte_stream:
-                    yield byte_stream
+                string_stream = fo.read(self.__stream_packet_size)
+                if string_stream:
+                    yield sankalpa_fs_pb2.Content(content=string_stream)
                 else:
                     break
 
