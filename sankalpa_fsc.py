@@ -204,6 +204,7 @@ class Xmp(Fuse):
                 root_path = _full_path(root, path)
                 client_mtime = self.get_client_mtime(root_path)
                 if server_mtime > client_mtime:
+                    print '***********************************Fetching from server '
                     self.get_remote_file(root_path, proto_path)
                     # keep the client mtime in sync with server due to
                     # network delays
