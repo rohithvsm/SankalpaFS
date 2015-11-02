@@ -25,7 +25,7 @@ message MTime {
 }
 
 message Content {
-  bytes content = 1;
+  string content = 1;
 }
 
 message NumBytes {
