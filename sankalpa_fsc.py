@@ -27,6 +27,11 @@ stub = None
 mount_point = None
 root = None
 
+_stream_packet_size = 64 * 1024  # TCP packet size
+_stream_packet_size -= 60  # maximum TCP header size
+_stream_packet_size -= 192  # maximum IPv4 header size
+_stream_packet_size -= 24  # Ethernet header size
+
 _TIMEOUT_SECONDS = 30
 
 if not hasattr(fuse, '__version__'):
@@ -195,15 +200,18 @@ class Xmp(Fuse):
                     wfo.write(cont.content)
 
         def __init__(self, path, flags, *mode):
+            # To find whether the file is modified
+            self.isModified = False
+
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
             proto_path = sankalpa_fs_pb2.Path(path=path)
             server_mtime = self.get_server_mtime(proto_path)
+            root_path = _full_path(root, path)
             print '********************************Server_mtime %s' % server_mtime
             if server_mtime != 0:
-                root_path = _full_path(root, path)
                 client_mtime = self.get_client_mtime(root_path)
-                print '***********************************Path %s' % client_mtime
+                print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
                     self.get_remote_file(root_path, proto_path)
@@ -213,6 +221,8 @@ class Xmp(Fuse):
             self.file = os.fdopen(os.open("." + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
+            self.root_path = root_path
+            self.path = path
 
         def read(self, length, offset):
             self.file.seek(offset)
@@ -221,9 +231,34 @@ class Xmp(Fuse):
         def write(self, buf, offset):
             self.file.seek(offset)
             self.file.write(buf)
+            self.isModified = True
             return len(buf)
 
+        def read_file_contents(self):
+            print '********** read_file_contents ************'
+            yield sankalpa_fs_pb2.Content(content=self.path)
+
+            with open(self.root_path, 'r') as fo:
+                while True:
+                    string_stream = fo.read(_stream_packet_size)
+                    if string_stream:
+                        yield sankalpa_fs_pb2.Content(content=string_stream)
+                    else:
+                        break
+
+        def update_remote_file(self):
+            print '********** update_remote_file ************'
+            content_iter = self.read_file_contents()
+            ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
+            if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
+               print '********** File Update Error ************'
+               raise OSError("File Update Error")
+
         def release(self, flags):
+            print '********** RELEASE ************'
+            print '********** isModified %s ' % self.isModified
+            if self.isModified:
+                self.update_remote_file()
             self.file.close()
 
         def _fflush(self):

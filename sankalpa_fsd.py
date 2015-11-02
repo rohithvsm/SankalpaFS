@@ -37,7 +37,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             if e.errno == errno.ENOENT:
                 mt = 0
         print '********** %s' % mt
-        return sankalpa_fs_pb2.MTime(mtime=mt) 
+        return sankalpa_fs_pb2.MTime(mtime = mt)
 
     def get_file_contents(self, Path, context):
         print '********** in get_file_contents ************'
@@ -50,26 +50,35 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                 else:
                     break
 
-    def update_file(self, Content, context):
-        file_name = None
-
-        with tempfile.NamedTemporaryFile() as temp:
+    def update_file(self, Content_iter, context):
+        file_path_rel = None
+        print '********** update_file ************'
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
+            temp_filename = temp.name
             counter = 0
             # TODO: try multiple for loops and slicing
-            for cont in Content:
+            for cont in Content_iter:
                 if counter == 0:
-                    file_name = cont
+                    file_path_rel = cont.content
                     counter += 1
                     continue
-                temp.write(Content.content)
-            os.rename(tempfile.NamedTemporaryFile.name, os.path.join(self.__base_dir
-                                                           ,file_name))
+                temp.write(cont.content)
+            print '********** update_file temp file name %s' % temp.name
+        print '********** update_file name %s' % file_path_rel
+        file_path = _full_path(self.__base_dir, file_path_rel)
+        print '********** update_file name %s' % file_path
+        os.rename(temp_filename, file_path)
+        #TODO : DO we need to return numb_bytes ?
+        print '********** update_file size %s' % os.stat(file_path).st_size
+        return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel, num_bytes=os.stat(file_path).st_size)
 
     def delete(self, Path, context):
         os.remove(os.path.join(self.__base_dir, Path.path))
         
 def serve():
     storage_dir = sys.argv[1]
+    if not storage_dir.startswith('/'):
+        sys.exit("Storage directory must start with /")
     if not os.path.exists(storage_dir):
         os.makedirs(storage_dir)
     server = sankalpa_fs_pb2.beta_create_SankalpaFS_server(SankalpaFSServicer(sys.argv[1]))
