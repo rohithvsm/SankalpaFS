@@ -191,7 +191,7 @@ class Xmp(Fuse):
         def get_remote_file(self, root_path, proto_path):
             # TODO: incremental updates with rsync
             with open(root_path, 'wb') as wfo:
-                for cont in stub.get_file_content(proto_path, _TIMEOUT_SECONDS):
+                for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                     wfo.write(cont.content)
 
         def __init__(self, path, flags, *mode):
