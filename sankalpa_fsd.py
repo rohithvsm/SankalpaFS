@@ -37,7 +37,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             if e.errno == errno.ENOENT:
                 mt = 0
         print '********** %s' % mt
-        return sankalpa_fs_pb2.MTime(mtime=mt) 
+        return sankalpa_fs_pb2.MTime(mtime = mt)
 
     def get_file_contents(self, Path, context):
         print '********** in get_file_contents ************'
@@ -46,24 +46,29 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             while True:
                 string_stream = fo.read(self.__stream_packet_size)
                 if string_stream:
-                    yield sankalpa_fs_pb2.Content(content=string_stream)
+                    yield sankalpa_fs_pb2.Content(content = string_stream)
                 else:
                     break
 
-    def update_file(self, Content, context):
-        file_name = None
-
+    def update_file(self, Content_iter, context):
+        file_path_rel = None
+        print '********** update_file ************'
         with tempfile.NamedTemporaryFile() as temp:
             counter = 0
             # TODO: try multiple for loops and slicing
-            for cont in Content:
+            for cont in Content_iter:
                 if counter == 0:
-                    file_name = cont
+                    file_path_rel = cont.content
                     counter += 1
                     continue
-                temp.write(Content.content)
-            os.rename(tempfile.NamedTemporaryFile.name, os.path.join(self.__base_dir
-                                                           ,file_name))
+                temp.write(cont.content)
+            print '********** update_file name %s' % file_path_rel
+            file_path = _full_path(self.__base_dir, file_path_rel)
+            print '********** update_file name %s' % file_path
+            os.rename(temp.name, file_path)
+            #TODO : DO we need to return numb_bytes ?
+            print '********** update_file size %s' % os.stat(file_path).st_size
+            return sankalpa_fs_pb2.UpdateAck(file_path = file_path_rel, file_pathnum_bytes = os.stat(file_path).st_size)
 
     def delete(self, Path, context):
         os.remove(os.path.join(self.__base_dir, Path.path))

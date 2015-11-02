@@ -11,7 +11,7 @@ service SankalpaFS {
 
   rpc get_file_contents(Path) returns (stream Content) {}
 
-  rpc update_file(stream Content) returns (NumBytes) {}
+  rpc update_file(stream Content) returns (UpdateAck) {}
 
   rpc delete(Path) returns (Status) {}
 }
@@ -28,7 +28,8 @@ message Content {
   string content = 1;
 }
 
-message NumBytes {
+message UpdateAck {
+  string file_path = 1;
   int64 num_bytes = 1;
 }
 
