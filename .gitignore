@@ -1,2 +1,3 @@
 *.pyc
 .idea
+*_pb2.py
