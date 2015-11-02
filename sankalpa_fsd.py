@@ -75,6 +75,8 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         
 def serve():
     storage_dir = sys.argv[1]
+    if not storage_dir.startswith('/'):
+        sys.exit("Storage directory must start with /")
     if not os.path.exists(storage_dir):
         os.makedirs(storage_dir)
     server = sankalpa_fs_pb2.beta_create_SankalpaFS_server(SankalpaFSServicer(sys.argv[1]))

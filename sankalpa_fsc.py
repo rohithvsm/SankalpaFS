@@ -255,6 +255,8 @@ class Xmp(Fuse):
                 raise OSError("File Update Error")
 
         def release(self, flags):
+            print '********** RELEASE ************'
+            print '********** isModified %s ' % self.isModified
             if self.isModified:
                 self.update_remote_file()
             self.file.close()
