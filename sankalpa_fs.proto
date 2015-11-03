@@ -19,6 +19,10 @@ service SankalpaFS {
 
   rpc rmdir(Path) returns (Status) {}
 
+  rpc readdir(Path) returns (ListDir) {}
+
+  rpc getattr(Path) returns (Stat) {}
+
 }
 
 message Path {
@@ -41,4 +45,21 @@ message UpdateAck {
 
 message Status {
   uint32 status = 1;
+}
+
+message ListDir {
+  repeated string dir = 1;
+}
+
+message Stat {
+  uint32 st_mode = 1;
+  uint32 st_ino = 2;
+  uint32 st_dev = 3;
+  uint32 st_nlink = 4;
+  uint32 st_uid = 5;
+  uint32 st_gid = 6;
+  uint32 st_size = 7;
+  float st_atime = 8;
+  float st_mtime = 9;
+  float st_ctime  = 10;
 }

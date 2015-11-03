@@ -83,16 +83,27 @@ class Xmp(Fuse):
 #            print "mythread: ticking"
 
     def getattr(self, path):
-        return os.lstat("." + path)
+        print '****************************************** getattr'
+        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path))
+        print '****************************************** server_stat.st_size %s' % stat.st_size
+        return dict((key, getattr(stat, key)) for key in ('st_dev','st_ino','st_atime', 'st_ctime',
+                     'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
+        # return os.lstat("." + path)
 
     def readlink(self, path):
         return os.readlink("." + path)
 
     def readdir(self, path, offset):
-        for e in os.listdir("." + path):
-            yield fuse.Direntry(e)
+        print '****************************************** readdir'
+
+        for e in stub.readdir(sankalpa_fs_pb2.Path(path=path)).dir:
+            print '****************************************** direntry %s' % e
+            yield e
+        # for e in os.listdir("." + path):
+        #     yield fuse.Direntry(e)
 
     def unlink(self, path):
+        print '****************************************** unlink'
         try:
             os.unlink("." + path)
         except OSError:

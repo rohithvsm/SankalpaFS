@@ -87,6 +87,28 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
 
     def rmdir(self, Path, context):
         os.remove(_full_path(self.__base_dir, Path.path))
+
+    def readdir(self, Path, context):
+        ro = sankalpa_fs_pb2.ListDir()
+        for direntry in os.listdir(_full_path(self.__base_dir, Path.path)):
+            ro.dir.append(direntry)
+        return ro
+
+    def getattr(self, Path, context):
+        server_file_stat = os.lstat(_full_path(self.__base_dir, Path.path))
+        ro = sankalpa_fs_pb2.Stat()
+
+        ro.st_mode = server_file_stat.st_mode
+        ro.st_ino = server_file_stat.st_ino
+        ro.st_dev = server_file_stat.st_dev
+        ro.st_nlink = server_file_stat.st_nlink
+        ro.st_uid = server_file_stat.st_uid
+        ro.st_gid = server_file_stat.st_gid
+        ro.st_size = server_file_stat.st_size
+        ro.st_atime = server_file_stat.st_atime
+        ro.st_mtime = server_file_stat.st_mtime
+        ro.st_ctime  = server_file_stat.st_ctime
+        return ro
         
 def serve():
     storage_dir = sys.argv[1]
