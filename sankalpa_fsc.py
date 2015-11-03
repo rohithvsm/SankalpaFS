@@ -84,7 +84,7 @@ class Xmp(Fuse):
 #            print "mythread: ticking"
 
     def getattr(self, path):
-        print '****************************************** getattr'
+        print '****************************************** getattr %s' % path
         stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
         if stat.status != 0:
             raise OSError(stat.status)
