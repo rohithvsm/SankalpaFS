@@ -44,11 +44,11 @@ message UpdateAck {
 }
 
 message Status {
-  uint32 status = 1;
+  int32 status = 1;
 }
 
 message ListDir {
-  uint32 status = 1;
+  int32 status = 1;
   repeated string dir = 2;
 }
 
@@ -63,5 +63,5 @@ message Stat {
   float st_atime = 8;
   float st_mtime = 9;
   float st_ctime  = 10;
-  uint32 status = 11;
+  int32 status = 11;
 }
