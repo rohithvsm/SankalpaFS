@@ -53,15 +53,15 @@ message ListDir {
 }
 
 message Stat {
-  optional uint32 st_mode = 1;
-  optional uint32 st_ino = 2;
-  optional uint32 st_dev = 3;
-  optional uint32 st_nlink = 4;
-  optional uint32 st_uid = 5;
-  optional uint32 st_gid = 6;
-  optional uint32 st_size = 7;
-  optional float st_atime = 8;
-  optional float st_mtime = 9;
-  optional float st_ctime  = 10;
+  uint32 st_mode = 1;
+  uint32 st_ino = 2;
+  uint32 st_dev = 3;
+  uint32 st_nlink = 4;
+  uint32 st_uid = 5;
+  uint32 st_gid = 6;
+  uint32 st_size = 7;
+  float st_atime = 8;
+  float st_mtime = 9;
+  float st_ctime  = 10;
   uint32 status = 11;
 }
