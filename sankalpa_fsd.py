@@ -89,17 +89,29 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         os.remove(_full_path(self.__base_dir, Path.path))
 
     def readdir(self, Path, context):
-        print '********** readdir ************'
+        print '********** readdir ************ %s' % Path.path
         ro = sankalpa_fs_pb2.ListDir()
-        for direntry in os.listdir(_full_path(self.__base_dir, Path.path)):
+        ro.status = 0
+        direntries = None
+        try:
+            direntries = os.listdir(_full_path(self.__base_dir, Path.path))
+        except OSError as ose:
+            ro.status = ose.errno
+            return ro
+        for direntry in direntries:
             ro.dir.append(direntry)
         print '**************** ro %s' % ro
         return ro
 
     def getattr(self, Path, context):
-        print '********** getattr ************'
-        server_file_stat = os.lstat(_full_path(self.__base_dir, Path.path))
+        print '********** getattr ************ %s' % Path.path
         ro = sankalpa_fs_pb2.Stat()
+        ro.status = 0
+        try:
+            server_file_stat = os.lstat(_full_path(self.__base_dir, Path.path))
+        except OSError as ose:
+            ro.status = ose.errno
+            return ro
         ro.st_mode = server_file_stat.st_mode
         ro.st_ino = server_file_stat.st_ino
         ro.st_dev = server_file_stat.st_dev
