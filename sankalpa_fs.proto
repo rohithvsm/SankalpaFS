@@ -14,6 +14,11 @@ service SankalpaFS {
   rpc update_file(stream Content) returns (UpdateAck) {}
 
   rpc delete(Path) returns (Status) {}
+
+  rpc mkdir(Path) returns (Status) {}
+
+  rpc rmdir(Path) returns (Status) {}
+
 }
 
 message Path {

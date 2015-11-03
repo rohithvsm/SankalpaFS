@@ -76,7 +76,17 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                                          server_mtime=sankalpa_fs_pb2.MTime(mtime = stat.st_mtime))
 
     def delete(self, Path, context):
-        os.remove(os.path.join(self.__base_dir, Path.path))
+        try:
+            os.remove(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
+    def mkdir(self, Path, context):
+        os.remove(_full_path(self.__base_dir, Path.path))
+
+    def rmdir(self, Path, context):
+        os.remove(_full_path(self.__base_dir, Path.path))
         
 def serve():
     storage_dir = sys.argv[1]

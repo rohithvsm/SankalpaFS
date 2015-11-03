@@ -93,7 +93,12 @@ class Xmp(Fuse):
             yield fuse.Direntry(e)
 
     def unlink(self, path):
-        os.unlink("." + path)
+        try:
+            os.unlink("." + path)
+        except OSError:
+            pass
+        return stub.delete(sankalpa_fs_pb2.Path(path=path)).status
+
 
     def rmdir(self, path):
         os.rmdir("." + path)
@@ -220,6 +225,9 @@ class Xmp(Fuse):
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
                     temp_filename = self.get_remote_file(root_path, proto_path)
+                    # If the dir path doesnt exsists when the file already exsists.
+                    if not os.path.exists(os.path.dirname(root_path)):
+                        os.makedirs(os.path.dirname(root_path))
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
                     # network delays
