@@ -84,7 +84,7 @@ class Xmp(Fuse):
 
     def getattr(self, path):
         print '****************************************** getattr'
-        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path))
+        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
         print '****************************************** server_stat.st_size %s' % stat.st_size
         return dict((key, getattr(stat, key)) for key in ('st_dev','st_ino','st_atime', 'st_ctime',
                      'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
@@ -96,7 +96,7 @@ class Xmp(Fuse):
     def readdir(self, path, offset):
         print '****************************************** readdir'
 
-        for e in stub.readdir(sankalpa_fs_pb2.Path(path=path)).dir:
+        for e in stub.readdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).dir:
             print '****************************************** direntry %s' % e
             yield e
         # for e in os.listdir("." + path):
@@ -108,7 +108,7 @@ class Xmp(Fuse):
             os.unlink("." + path)
         except OSError:
             pass
-        return stub.delete(sankalpa_fs_pb2.Path(path=path)).status
+        return stub.delete(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
 
 
     def rmdir(self, path):
