@@ -16,6 +16,8 @@ from errno import *
 from stat import *
 import fcntl
 # pull in some spaghetti to make this stuff work without fuse-py being installed
+import tempfile
+
 try:
     import _find_fuse_parts
 except ImportError:
@@ -195,9 +197,12 @@ class Xmp(Fuse):
 
         def get_remote_file(self, root_path, proto_path):
             # TODO: incremental updates with rsync
-            with open(root_path, 'w') as wfo:
+            temp_filename = None
+            with tempfile.NamedTemporaryFile(delete=False) as temp:
+                temp_filename = temp.name
                 for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
-                    wfo.write(cont.content)
+                    temp.write(cont.content)
+            return temp_filename
 
         def __init__(self, path, flags, *mode):
             # To find whether the file is modified
@@ -214,7 +219,8 @@ class Xmp(Fuse):
                 print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
-                    self.get_remote_file(root_path, proto_path)
+                    temp_filename = self.get_remote_file(root_path, proto_path)
+                    os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
                     # network delays
                     os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
