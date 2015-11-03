@@ -84,9 +84,10 @@ class Xmp(Fuse):
 
     def getattr(self, path):
         print '****************************************** getattr'
-        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
-        print '****************************************** server_stat.st_size %s' % stat.st_size
-        return dict((key, getattr(stat, key)) for key in ('st_atime', 'st_ctime',
+        # stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
+        # print '****************************************** server_stat.st_size %s' % stat.st_size
+        st = os.lstat(path)
+        return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
                      'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
         # return os.lstat("." + path)
         # 'st_dev','st_ino',
