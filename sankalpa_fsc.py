@@ -84,11 +84,10 @@ class Xmp(Fuse):
 
     def getattr(self, path):
         print '****************************************** getattr'
-        # stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
-        # print '****************************************** server_stat.st_size %s' % stat.st_size
-        st = os.lstat(path)
-        return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
-                     'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
+        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
+        print '****************************************** server_stat.st_size %s' % stat.st_size
+        return dict((key, getattr(stat, key)) for key in ('st_mode','st_ino','st_dev','st_nlink','st_uid','st_gid',
+                                                        'st_size','st_atime','st_mtime','st_ctime'))
         # return os.lstat("." + path)
         # 'st_dev','st_ino',
 
@@ -100,7 +99,7 @@ class Xmp(Fuse):
 
         for e in stub.readdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).dir:
             print '****************************************** direntry %s' % e
-            yield e
+            yield fuse.Direntry(e)
         # for e in os.listdir("." + path):
         #     yield fuse.Direntry(e)
 
