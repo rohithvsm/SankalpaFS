@@ -87,6 +87,7 @@ class Xmp(Fuse):
         print '****************************************** getattr %s' % path
         stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
         if stat.status != 0:
+            print '****************************************** getattr status != 0 %s' % stat.status
             raise OSError(stat.status)
         print '****************************************** server_stat.st_size %s' % stat.st_size
         return posix.stat_result((stat.st_mode, stat.st_ino, stat.st_dev, stat.st_nlink, stat.st_uid, stat.st_gid,
@@ -103,6 +104,7 @@ class Xmp(Fuse):
         print '****************************************** readdir %s' % path
         direntries = stub.readdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
         if direntries.status != 0:
+            print '****************************************** readdir status != 0 %s' % direntries.status
             raise OSError(direntries.status)
         for e in direntries.dir:
             print '****************************************** direntry %s' % e

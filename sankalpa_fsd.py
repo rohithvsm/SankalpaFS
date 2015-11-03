@@ -97,11 +97,12 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             direntries = os.listdir(_full_path(self.__base_dir, Path.path))
         except OSError as ose:
             ro.status = ose.errno
-            print '**************** ro %s' % ro
+            print '**************** ro %s' % ro.status
             return ro
         for direntry in direntries:
             ro.dir.append(direntry)
-        print '**************** ro %s' % ro
+        print '**************** ro status %s' % ro.status
+        print '**************** ro dir %s' % ro.dir
         return ro
 
     def getattr(self, Path, context):
@@ -112,7 +113,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             server_file_stat = os.lstat(_full_path(self.__base_dir, Path.path))
         except OSError as ose:
             ro.status = ose.errno
-            print '**************** ro %s' % ro
+            print '**************** ro status %s' % ro.status
             return ro
         ro.st_mode = server_file_stat.st_mode
         ro.st_ino = server_file_stat.st_ino
@@ -124,6 +125,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         ro.st_atime = server_file_stat.st_atime
         ro.st_mtime = server_file_stat.st_mtime
         ro.st_ctime  = server_file_stat.st_ctime
+        print '**************** ro status %s' % ro.status
         print '**************** ro %s' % ro
         return ro
         
