@@ -17,6 +17,7 @@ from stat import *
 import fcntl
 # pull in some spaghetti to make this stuff work without fuse-py being installed
 import tempfile
+import posix
 
 try:
     import _find_fuse_parts
@@ -86,8 +87,8 @@ class Xmp(Fuse):
         print '****************************************** getattr'
         stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
         print '****************************************** server_stat.st_size %s' % stat.st_size
-        return (stat.st_mode, stat.st_ino, stat.st_dev, stat.st_nlink, stat.st_uid, stat.st_gid,
-                                                        stat.st_size, stat.st_atime, stat.st_mtime, stat.st_ctime)
+        return posix.stat_result((stat.st_mode, stat.st_ino, stat.st_dev, stat.st_nlink, stat.st_uid, stat.st_gid,
+                                                        stat.st_size, stat.st_atime, stat.st_mtime, stat.st_ctime))
         #return (getattr(stat, key)) for key in ('st_mode','st_ino','st_dev','st_nlink','st_uid','st_gid',
                                                         # 'st_size','st_atime','st_mtime','st_ctime'))
         # return os.lstat("." + path)
@@ -98,7 +99,6 @@ class Xmp(Fuse):
 
     def readdir(self, path, offset):
         print '****************************************** readdir'
-
         for e in stub.readdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).dir:
             print '****************************************** direntry %s' % e
             yield fuse.Direntry(e)
