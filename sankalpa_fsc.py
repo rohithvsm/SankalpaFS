@@ -274,7 +274,7 @@ class Xmp(Fuse):
                     print '***********************************Fetching from server '
                     temp_filename = self.get_remote_file(proto_path)
 
-                    os.utime(temp_filename, (os.fstat(temp_filename).st_atime, server_mtime))
+                    os.utime(temp_filename, (os.stat(temp_filename).st_atime, server_mtime))
 
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
