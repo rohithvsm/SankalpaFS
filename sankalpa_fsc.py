@@ -113,7 +113,7 @@ class Xmp(Fuse):
         #     yield fuse.Direntry(e)
 
     def unlink(self, path):
-        print '****************************************** unlink'
+        print '****************************************** unlink %s' % path
         try:
             os.unlink("." + path)
         except OSError:
@@ -122,7 +122,8 @@ class Xmp(Fuse):
 
 
     def rmdir(self, path):
-        os.rmdir("." + path)
+        return stub.rmdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        # os.rmdir("." + path)
 
     def symlink(self, path, path1):
         os.symlink(path, "." + path1)
@@ -148,7 +149,8 @@ class Xmp(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        os.mkdir("." + path, mode)
+        return stub.mkdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        #os.mkdir("." + path, mode)
 
     def utime(self, path, times):
         os.utime("." + path, times)

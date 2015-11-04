@@ -83,10 +83,18 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             return sankalpa_fs_pb2.Status(status=ose.errno)
 
     def mkdir(self, Path, context):
-        os.remove(_full_path(self.__base_dir, Path.path))
+        try:
+            os.mkdir(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            return sankalpa_fs_pb2.Status(status=ose.errno)
 
     def rmdir(self, Path, context):
-        os.remove(_full_path(self.__base_dir, Path.path))
+        try:
+            os.rmdir(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            return sankalpa_fs_pb2.Status(status=ose.errno)
 
     def readdir(self, Path, context):
         print '********** readdir ************ %s' % Path.path
