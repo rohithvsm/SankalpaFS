@@ -122,6 +122,7 @@ class Xmp(Fuse):
 
 
     def rmdir(self, path):
+        print '****************************************** rmdir %s' % path
         status = stub.rmdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
         if status == 0:
             return status
@@ -133,7 +134,8 @@ class Xmp(Fuse):
         os.symlink(path, "." + path1)
 
     def rename(self, path, path1):
-        status = stub.rename(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        print '****************************************** rename src %s dst %s' % (path, path1)
+        status = stub.rename(sankalpa_fs_pb2.SrcDst(src=path,dst=path1), _TIMEOUT_SECONDS).status
         if status == 0:
             return status
         else:
