@@ -103,7 +103,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             return sankalpa_fs_pb2.Status(status=ose.errno)
 
     def rename(self, srcdst, context):
-        print '********** rename ************ src %s dst %s' % (srcdst.src, srcdst.src)
+        print '********** rename ************ src %s dst %s' % (srcdst.src, srcdst.dst)
         try:
             os.rename(_full_path(self.__base_dir, srcdst.src), _full_path(self.__base_dir, srcdst.dst))
             return sankalpa_fs_pb2.Status(status=0)

@@ -23,7 +23,7 @@ service SankalpaFS {
 
   rpc getattr(Path) returns (Stat) {}
 
-  rpc rename(SrcDst) returns (Stat) {}
+  rpc rename(SrcDst) returns (Status) {}
 
 }
 
