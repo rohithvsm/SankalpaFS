@@ -242,6 +242,8 @@ class Xmp(Fuse):
             server_mtime = self.get_server_mtime(proto_path)
             root_path = _full_path(root, path)
             print '********************************Server_mtime %s' % server_mtime
+            if not os.path.exists(os.path.dirname(root_path)):
+                os.makedirs(os.path.dirname(root_path))
             if server_mtime != 0:
                 client_mtime = self.get_client_mtime(root_path)
                 print '***********************************client_mtime %s' % client_mtime
@@ -249,8 +251,6 @@ class Xmp(Fuse):
                     print '***********************************Fetching from server '
                     temp_filename = self.get_remote_file(root_path, proto_path)
                     # If the dir path doesnt exsists when the file already exsists.
-                    if not os.path.exists(os.path.dirname(root_path)):
-                        os.makedirs(os.path.dirname(root_path))
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
                     # network delays
