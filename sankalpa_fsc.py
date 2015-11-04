@@ -18,6 +18,7 @@ import fcntl
 # pull in some spaghetti to make this stuff work without fuse-py being installed
 import tempfile
 import posix
+from sys import platform as _platform
 
 try:
     import _find_fuse_parts
@@ -248,6 +249,8 @@ class Xmp(Fuse):
                 temp_filename = temp.name
                 for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                     temp.write(cont.content)
+                temp.flush()
+                os.fsync(temp.fileno())
             return temp_filename
 
         def __init__(self, path, flags, *mode):
@@ -329,7 +332,9 @@ class Xmp(Fuse):
                 self.update_remote_file()
             os.rename(self.tmp_file_name, self.root_path)
             self.isModified = False
-            self.file
+            # self.file.flush()
+            # os.fsync(self.fd)
+            self.fsync(if 'linux' in _platform.lower())
             self.file.close()
 
         def _fflush(self):
