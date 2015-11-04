@@ -145,6 +145,7 @@ class Xmp(Fuse):
         os.chown("." + path, user, group)
 
     def truncate(self, path, len):
+        print '********** File System truncate ************'
         f = open("." + path, "a")
         f.truncate(len)
         f.close()
@@ -263,6 +264,8 @@ class Xmp(Fuse):
                     # keep the client mtime in sync with server due to
                     # network delays
                     os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
+            else:
+                self.isModified = True
             self.file = os.fdopen(os.open("." + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
@@ -309,6 +312,7 @@ class Xmp(Fuse):
             print '********** isModified %s ' % self.isModified
             if self.isModified:
                 self.update_remote_file()
+            self.isModified = False
             self.file.close()
 
         def _fflush(self):
@@ -331,7 +335,9 @@ class Xmp(Fuse):
             return os.fstat(self.fd)
 
         def ftruncate(self, len):
+            print '********** File ftruncate ************'
             self.file.truncate(len)
+            self.isModified = True
 
         def lock(self, cmd, owner, **kw):
             # The code here is much rather just a demonstration of the locking
