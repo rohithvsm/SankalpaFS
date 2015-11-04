@@ -23,6 +23,8 @@ service SankalpaFS {
 
   rpc getattr(Path) returns (Stat) {}
 
+  rpc rename(SrcDst) returns (Stat) {}
+
 }
 
 message Path {
@@ -64,4 +66,9 @@ message Stat {
   float st_mtime = 9;
   float st_ctime  = 10;
   int32 status = 11;
+}
+
+message SrcDst {
+  string src = 1;
+  string dst = 2;
 }

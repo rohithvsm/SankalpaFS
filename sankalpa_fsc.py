@@ -133,7 +133,12 @@ class Xmp(Fuse):
         os.symlink(path, "." + path1)
 
     def rename(self, path, path1):
-        os.rename("." + path, "." + path1)
+        status = stub.rename(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
+        #os.rename("." + path, "." + path1)
 
     def link(self, path, path1):
         os.link("." + path, "." + path1)

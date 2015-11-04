@@ -96,6 +96,13 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         except OSError as ose:
             return sankalpa_fs_pb2.Status(status=ose.errno)
 
+    def rename(self, srcdst, context):
+        try:
+            os.rename(_full_path(self.__base_dir, srcdst.src), _full_path(self.__base_dir, srcdst.dst))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
     def readdir(self, Path, context):
         print '********** readdir ************ %s' % Path.path
         ro = sankalpa_fs_pb2.ListDir()
