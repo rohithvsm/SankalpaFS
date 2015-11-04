@@ -76,7 +76,81 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                                          server_mtime=sankalpa_fs_pb2.MTime(mtime = stat.st_mtime))
 
     def delete(self, Path, context):
-        os.remove(os.path.join(self.__base_dir, Path.path))
+        print '********** delete ************ %s' % Path.path
+        try:
+            os.remove(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            print '********** OSERROR ************ %s' % ose.errno
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
+    def mkdir(self, Path, context):
+        print '********** mkdir ************ %s' % Path.path
+        try:
+            os.mkdir(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            print '********** OSERROR ************ %s' % ose.errno
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
+    def rmdir(self, Path, context):
+        print '********** rmdir ************ %s' % Path.path
+        try:
+            os.rmdir(_full_path(self.__base_dir, Path.path))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            print '********** OSERROR ************ %s' % ose.errno
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
+    def rename(self, srcdst, context):
+        print '********** rename ************ src %s dst %s' % (srcdst.src, srcdst.dst)
+        try:
+            os.rename(_full_path(self.__base_dir, srcdst.src), _full_path(self.__base_dir, srcdst.dst))
+            return sankalpa_fs_pb2.Status(status=0)
+        except OSError as ose:
+            print '********** OSERROR ************ %s' % ose.errno
+            return sankalpa_fs_pb2.Status(status=ose.errno)
+
+    def readdir(self, Path, context):
+        print '********** readdir ************ %s' % Path.path
+        ro = sankalpa_fs_pb2.ListDir()
+        ro.status = 0
+        direntries = None
+        try:
+            direntries = os.listdir(_full_path(self.__base_dir, Path.path))
+        except OSError as ose:
+            ro.status = ose.errno
+            print '**************** ro %s' % ro.status
+            return ro
+        for direntry in direntries:
+            ro.dir.append(direntry)
+        print '**************** ro status %s' % ro.status
+        print '**************** ro dir %s' % ro.dir
+        return ro
+
+    def getattr(self, Path, context):
+        print '********** getattr ************ %s' % Path.path
+        ro = sankalpa_fs_pb2.Stat()
+        ro.status = 0
+        try:
+            server_file_stat = os.lstat(_full_path(self.__base_dir, Path.path))
+        except OSError as ose:
+            ro.status = ose.errno
+            print '**************** ro status %s' % ro.status
+            return ro
+        ro.st_mode = server_file_stat.st_mode
+        ro.st_ino = server_file_stat.st_ino
+        ro.st_dev = server_file_stat.st_dev
+        ro.st_nlink = server_file_stat.st_nlink
+        ro.st_uid = server_file_stat.st_uid
+        ro.st_gid = server_file_stat.st_gid
+        ro.st_size = server_file_stat.st_size
+        ro.st_atime = server_file_stat.st_atime
+        ro.st_mtime = server_file_stat.st_mtime
+        ro.st_ctime  = server_file_stat.st_ctime
+        print '**************** ro status %s' % ro.status
+        print '**************** ro %s' % ro
+        return ro
         
 def serve():
     storage_dir = sys.argv[1]

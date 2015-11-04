@@ -17,6 +17,7 @@ from stat import *
 import fcntl
 # pull in some spaghetti to make this stuff work without fuse-py being installed
 import tempfile
+import posix
 
 try:
     import _find_fuse_parts
@@ -83,26 +84,63 @@ class Xmp(Fuse):
 #            print "mythread: ticking"
 
     def getattr(self, path):
-        return os.lstat("." + path)
+        print '****************************************** getattr %s' % path
+        stat = stub.getattr(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
+        if stat.status != 0:
+            print '****************************************** getattr status != 0 %s' % stat.status
+            raise OSError(stat.status,"OSError", path)
+        print '****************************************** server_stat.st_size %s' % stat.st_size
+        return posix.stat_result((stat.st_mode, stat.st_ino, stat.st_dev, stat.st_nlink, stat.st_uid, stat.st_gid,
+                                                        stat.st_size, stat.st_atime, stat.st_mtime, stat.st_ctime))
+        #return (getattr(stat, key)) for key in ('st_mode','st_ino','st_dev','st_nlink','st_uid','st_gid',
+                                                        # 'st_size','st_atime','st_mtime','st_ctime'))
+        # return os.lstat("." + path)
+        # 'st_dev','st_ino',
 
     def readlink(self, path):
         return os.readlink("." + path)
 
     def readdir(self, path, offset):
-        for e in os.listdir("." + path):
+        print '****************************************** readdir %s' % path
+        direntries = stub.readdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS)
+        if direntries.status != 0:
+            print '****************************************** readdir status != 0 %s' % direntries.status
+            raise OSError(direntries.status, "OSError", path)
+        for e in direntries.dir:
+            print '****************************************** direntry %s' % e
             yield fuse.Direntry(e)
+        # for e in os.listdir("." + path):
+        #     yield fuse.Direntry(e)
 
     def unlink(self, path):
-        os.unlink("." + path)
+        print '****************************************** unlink %s' % path
+        status = stub.delete(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
+
 
     def rmdir(self, path):
-        os.rmdir("." + path)
+        print '****************************************** rmdir %s' % path
+        status = stub.rmdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
+        # os.rmdir("." + path)
 
     def symlink(self, path, path1):
         os.symlink(path, "." + path1)
 
     def rename(self, path, path1):
-        os.rename("." + path, "." + path1)
+        print '****************************************** rename src %s dst %s' % (path, path1)
+        status = stub.rename(sankalpa_fs_pb2.SrcDst(src=path,dst=path1), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
+        #os.rename("." + path, "." + path1)
 
     def link(self, path, path1):
         os.link("." + path, "." + path1)
@@ -114,6 +152,7 @@ class Xmp(Fuse):
         os.chown("." + path, user, group)
 
     def truncate(self, path, len):
+        print '********** File System truncate ************'
         f = open("." + path, "a")
         f.truncate(len)
         f.close()
@@ -122,7 +161,12 @@ class Xmp(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        os.mkdir("." + path, mode)
+        status =  stub.mkdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
+        #os.mkdir("." + path, mode)
 
     def utime(self, path, times):
         os.utime("." + path, times)
@@ -214,16 +258,21 @@ class Xmp(Fuse):
             server_mtime = self.get_server_mtime(proto_path)
             root_path = _full_path(root, path)
             print '********************************Server_mtime %s' % server_mtime
+            if not os.path.exists(os.path.dirname(root_path)):
+                os.makedirs(os.path.dirname(root_path))
             if server_mtime != 0:
                 client_mtime = self.get_client_mtime(root_path)
                 print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
                     temp_filename = self.get_remote_file(root_path, proto_path)
+                    # If the dir path doesnt exsists when the file already exsists.
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
                     # network delays
                     os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
+            else:
+                self.isModified = True
             self.file = os.fdopen(os.open("." + path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
@@ -270,6 +319,7 @@ class Xmp(Fuse):
             print '********** isModified %s ' % self.isModified
             if self.isModified:
                 self.update_remote_file()
+            self.isModified = False
             self.file.close()
 
         def _fflush(self):
@@ -292,7 +342,9 @@ class Xmp(Fuse):
             return os.fstat(self.fd)
 
         def ftruncate(self, len):
+            print '********** File ftruncate ************'
             self.file.truncate(len)
+            self.isModified = True
 
         def lock(self, cmd, owner, **kw):
             # The code here is much rather just a demonstration of the locking
