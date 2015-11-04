@@ -6,7 +6,7 @@
 #    This program can be distributed under the terms of the GNU LGPL.
 #    See the file COPYING.
 #
-
+import shutil
 from grpc.beta import implementations
 import errno
 import sankalpa_fs_pb2
@@ -29,6 +29,7 @@ from fuse import Fuse
 stub = None
 mount_point = None
 root = None
+tmp_dir = None
 
 _stream_packet_size = 64 * 1024  # TCP packet size
 _stream_packet_size -= 60  # maximum TCP header size
@@ -239,10 +240,11 @@ class Xmp(Fuse):
                     client_mtime = 0
             return client_mtime
 
-        def get_remote_file(self, root_path, proto_path):
+        def get_remote_file(self, proto_path):
             # TODO: incremental updates with rsync
             temp_filename = None
-            with tempfile.NamedTemporaryFile(delete=False) as temp:
+            with tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir) as \
+                    temp:
                 temp_filename = temp.name
                 for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                     temp.write(cont.content)
@@ -265,7 +267,7 @@ class Xmp(Fuse):
                 print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
-                    temp_filename = self.get_remote_file(root_path, proto_path)
+                    temp_filename = self.get_remote_file(proto_path)
                     # If the dir path doesnt exsists when the file already exsists.
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
@@ -273,7 +275,13 @@ class Xmp(Fuse):
                     os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
             else:
                 self.isModified = True
-            self.file = os.fdopen(os.open("." + path, flags, *mode),
+            with tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir) as (
+                    tmp_fo):
+                self.tmp_file_name = tmp_fo.name
+                shutil.copy(root_path, self.tmp_file_name)
+            # self.file = os.fdopen(os.open("." + path, flags, *mode),
+            #                       flag2mode(flags))
+            self.file = os.fdopen(os.open(self.tmp_file_name, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
             self.root_path = root_path
@@ -319,6 +327,7 @@ class Xmp(Fuse):
             print '********** isModified %s ' % self.isModified
             if self.isModified:
                 self.update_remote_file()
+            os.rename(self.tmp_file_name, self.root_path)
             self.isModified = False
             self.file.close()
 
@@ -396,7 +405,7 @@ class Xmp(Fuse):
 
 def main():
 
-    global stub, mount_point, root
+    global stub, mount_point, root, tmp_dir
 
     channel = implementations.insecure_channel('pc-c220m4-r03-19.wisc.cloudlab.us', 50051)
     stub = sankalpa_fs_pb2.beta_create_SankalpaFS_stub(channel)
@@ -416,6 +425,8 @@ Userspace nullfs-alike: mirror the filesystem tree from some point on.
 
     mount_point = server.fuse_args.mountpoint
     root = server.root
+    tmp_dir = os.path.join(root, '..', '.tmp')
+    os.makedirs(tmp_dir)
 
     try:
         if server.fuse_args.mount_expected():
