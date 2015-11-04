@@ -263,19 +263,22 @@ class Xmp(Fuse):
             server_mtime = self.get_server_mtime(proto_path)
             root_path = _full_path(root, path)
             print '********************************Server_mtime %s' % server_mtime
+            # If the dir path doesnt exsists when the file already exsists.
             if not os.path.exists(os.path.dirname(root_path)):
                 os.makedirs(os.path.dirname(root_path))
+
             if server_mtime != 0:
                 client_mtime = self.get_client_mtime(root_path)
                 print '***********************************client_mtime %s' % client_mtime
                 if server_mtime > client_mtime:
                     print '***********************************Fetching from server '
                     temp_filename = self.get_remote_file(proto_path)
-                    # If the dir path doesnt exsists when the file already exsists.
+
+                    os.utime(temp_filename, (os.fstat(temp_filename).st_atime, server_mtime))
+
                     os.rename(temp_filename, root_path)
                     # keep the client mtime in sync with server due to
                     # network delays
-                    os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
             else:
                 self.isModified = True
             with tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir) as (
@@ -304,37 +307,35 @@ class Xmp(Fuse):
             print '********** read_file_contents ************'
             yield sankalpa_fs_pb2.Content(content=self.path)
 
-            with open(self.root_path, 'r') as fo:
-                while True:
-                    string_stream = fo.read(_stream_packet_size)
-                    if string_stream:
-                        yield sankalpa_fs_pb2.Content(content=string_stream)
-                    else:
-                        break
+            self.file.seek(0)
+            while True:
+                string_stream = self.file.read(_stream_packet_size)
+                if string_stream:
+                    yield sankalpa_fs_pb2.Content(content=string_stream)
+                else:
+                    break
 
         def update_remote_file(self):
             print '********** update_remote_file ************'
             content_iter = self.read_file_contents()
             ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
-            if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
+            if ack.file_path != self.path or ack.num_bytes != os.fstat(self.fd).st_size:
                print '********** File Update Error ************'
                raise OSError("File Update Error")
             else:
                 # Setting the mtime in client to reflect the server
                 # This avoid a fetch call after every update
                 print '********** File Update mtime ************'
-                os.utime(self.root_path, (os.stat(self.root_path).st_atime, ack.server_mtime.mtime))
+                os.utime(self.tmp_file_name, (os.fstat(self.fd).st_atime, ack.server_mtime.mtime))
 
         def release(self, flags):
             print '********** RELEASE ************'
             print '********** isModified %s ' % self.isModified
             if self.isModified:
                 self.update_remote_file()
+            self.fsync('linux' in _platform.lower())
             os.rename(self.tmp_file_name, self.root_path)
             self.isModified = False
-            # self.file.flush()
-            # os.fsync(self.fd)
-            self.fsync('linux' in _platform.lower())
             self.file.close()
 
         def _fflush(self):
