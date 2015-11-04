@@ -329,6 +329,7 @@ class Xmp(Fuse):
                 self.update_remote_file()
             os.rename(self.tmp_file_name, self.root_path)
             self.isModified = False
+            self.file
             self.file.close()
 
         def _fflush(self):
@@ -426,7 +427,13 @@ Userspace nullfs-alike: mirror the filesystem tree from some point on.
     mount_point = server.fuse_args.mountpoint
     root = server.root
     tmp_dir = os.path.join(root, '..', '.tmp')
-    os.makedirs(tmp_dir)
+    try:
+        os.makedirs(tmp_dir)
+    except OSError as ose:
+        if ose.errno == 17:
+            pass
+        else:
+            raise ose
 
     try:
         if server.fuse_args.mount_expected():
