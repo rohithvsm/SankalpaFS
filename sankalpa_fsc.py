@@ -114,15 +114,19 @@ class Xmp(Fuse):
 
     def unlink(self, path):
         print '****************************************** unlink %s' % path
-        try:
-            os.unlink("." + path)
-        except OSError:
-            pass
-        return stub.delete(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        status = stub.delete(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
 
 
     def rmdir(self, path):
-        return stub.rmdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        status = stub.rmdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
         # os.rmdir("." + path)
 
     def symlink(self, path, path1):
@@ -149,7 +153,11 @@ class Xmp(Fuse):
         os.mknod("." + path, mode, dev)
 
     def mkdir(self, path, mode):
-        return stub.mkdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        status =  stub.mkdir(sankalpa_fs_pb2.Path(path=path), _TIMEOUT_SECONDS).status
+        if status == 0:
+            return status
+        else:
+            raise OSError(status, "OSError", path)
         #os.mkdir("." + path, mode)
 
     def utime(self, path, times):
