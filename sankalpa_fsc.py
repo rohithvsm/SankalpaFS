@@ -334,7 +334,7 @@ class Xmp(Fuse):
             self.isModified = False
             # self.file.flush()
             # os.fsync(self.fd)
-            self.fsync(if 'linux' in _platform.lower())
+            self.fsync('linux' in _platform.lower())
             self.file.close()
 
         def _fflush(self):
