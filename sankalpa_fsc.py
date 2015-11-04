@@ -319,7 +319,7 @@ class Xmp(Fuse):
             print '********** update_remote_file ************'
             content_iter = self.read_file_contents()
             for i in content_iter:
-                print '********** update_remote_file content_iter ************ %s ' % content_iter.content
+                print '********** update_remote_file content_iter ************ %s ' % i.content
             ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
             if ack.file_path != self.path or ack.num_bytes != os.fstat(self.fd).st_size:
                print '********** File Update Error ************'
