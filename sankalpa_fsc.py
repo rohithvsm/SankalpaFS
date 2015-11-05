@@ -261,7 +261,7 @@ class Xmp(Fuse):
         def update_cache(self, cache_path, server_mtime, proto_path, cache_mtime):
 
             print '***********************************cache_mtime %s' % cache_mtime
-            if server_mtime > cache_mtime:
+            if float(str(server_mtime)) > float(str(cache_mtime)):
                 print '***********************************Fetching from server '
                 temp_filename = self.get_remote_file(proto_path)
                 # keep the client mtime in sync with server due to
