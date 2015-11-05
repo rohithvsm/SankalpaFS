@@ -294,7 +294,7 @@ class Xmp(Fuse):
                 #file is not available in server
                 self.isModified = True
 
-            if flags != os.O_RDONLY:
+            if flags == os.O_RDONLY:
             #return transaction fd
                 print '****************************************** Read only'
                 self.file = os.fdopen(os.open(cache_path, flags, *mode),
