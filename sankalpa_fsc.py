@@ -272,7 +272,7 @@ class Xmp(Fuse):
             #getting server mtime
             server_mtime = self.get_server_mtime(proto_path)
             cache_path = _full_path(root, path)
-            transaction_path = _full_path(transaction_dir, path + self.pid + '.swp')
+            transaction_path = _full_path(transaction_dir, path + str(self.pid) + '.swp')
             cache_mtime = self.get_client_mtime(cache_path)
 
             print '********************************Server_mtime %s' % server_mtime
