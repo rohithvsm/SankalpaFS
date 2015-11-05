@@ -17,7 +17,7 @@ def get_server_mtime(proto_path):
     # pdb.set_trace()
     mt = stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
     print '********************************Server_mtime in get server mt %s' % mt
-    return mt
+    return float(mt)
 
 
 def main():

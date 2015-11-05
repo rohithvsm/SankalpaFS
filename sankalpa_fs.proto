@@ -32,7 +32,7 @@ message Path {
 }
 
 message MTime {
-  float mtime = 1;
+  string mtime = 1;
 }
 
 message Content {
