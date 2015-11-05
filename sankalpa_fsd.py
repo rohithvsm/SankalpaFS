@@ -37,7 +37,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             if e.errno == errno.ENOENT:
                 mt = 0
         print '********** %s' % mt
-        return sankalpa_fs_pb2.MTime(mtime = str(mt))
+        return sankalpa_fs_pb2.MTime(mtime = mt)
 
     def get_file_contents(self, Path, context):
         print '********** in get_file_contents ************'
@@ -74,7 +74,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         print '********** update_file mtime %s' % stat.st_mtime
         return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel,
                                          num_bytes=stat.st_size,
-                                         server_mtime=sankalpa_fs_pb2.MTime(mtime = str(stat.st_mtime)))
+                                         server_mtime=sankalpa_fs_pb2.MTime(mtime = stat.st_mtime))
 
     def delete(self, Path, context):
         print '********** delete ************ %s' % Path.path

@@ -32,7 +32,7 @@ message Path {
 }
 
 message MTime {
-  string mtime = 1;
+  double mtime = 1;
 }
 
 message Content {
@@ -62,9 +62,9 @@ message Stat {
   uint32 st_uid = 5;
   uint32 st_gid = 6;
   uint32 st_size = 7;
-  float st_atime = 8;
-  float st_mtime = 9;
-  float st_ctime  = 10;
+  double st_atime = 8;
+  double st_mtime = 9;
+  double st_ctime  = 10;
   int32 status = 11;
 }
 

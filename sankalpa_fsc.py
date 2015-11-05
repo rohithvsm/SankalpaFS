@@ -237,7 +237,7 @@ class Xmp(Fuse):
             # pdb.set_trace()
             mt = stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
             print '********************************Server_mtime in get server mt %s' % mt
-            return float(mt)
+            return mt
 
         def get_client_mtime(self, path):
             try:
@@ -352,7 +352,7 @@ class Xmp(Fuse):
                 # Setting the mtime in client to reflect the server
                 # This avoid a fetch call after every update
                 print '********** File Update mtime form server ************ %s' % ack.server_mtime.mtime
-                os.utime(self.transaction_path, (os.stat(self.transaction_path).st_atime, float(ack.server_mtime.mtime)))
+                os.utime(self.transaction_path, (os.stat(self.transaction_path).st_atime, ack.server_mtime.mtime))
                 os.rename(self.transaction_path, self.cache_path)
 
         def release(self, flags):
