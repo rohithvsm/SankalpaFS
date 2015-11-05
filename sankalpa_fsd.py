@@ -71,6 +71,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
         #TODO : DO we need to return numb_bytes ?
         print '********** update_file size %s' % os.stat(file_path).st_size
         stat = os.stat(file_path)
+        print '********** update_file mtime %s' % stat.st_mtime
         return sankalpa_fs_pb2.UpdateAck(file_path=file_path_rel,
                                          num_bytes=stat.st_size,
                                          server_mtime=sankalpa_fs_pb2.MTime(mtime = str(stat.st_mtime)))

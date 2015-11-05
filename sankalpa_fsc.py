@@ -351,7 +351,7 @@ class Xmp(Fuse):
             else:
                 # Setting the mtime in client to reflect the server
                 # This avoid a fetch call after every update
-                print '********** File Update mtime ************'
+                print '********** File Update mtime form server ************ %s' % ack.server_mtime.mtime
                 os.utime(self.transaction_path, (os.stat(self.transaction_path).st_atime, float(ack.server_mtime.mtime)))
                 os.rename(self.transaction_path, self.cache_path)
 
