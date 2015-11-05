@@ -29,6 +29,7 @@ from fuse import Fuse
 stub = None
 mount_point = None
 root = None
+transaction_dir = None
 
 _stream_packet_size = 64 * 1024  # TCP packet size
 _stream_packet_size -= 60  # maximum TCP header size
@@ -153,7 +154,7 @@ class Xmp(Fuse):
 
     def truncate(self, path, len):
         print '********** File System truncate ************'
-        f = open("." + path, "a")
+        f = open(_full_path(transaction_dir,path), "a")
         f.truncate(len)
         f.close()
 
@@ -228,18 +229,29 @@ class Xmp(Fuse):
 
     class XmpFile(object):
 
+        def atomic_cp(self, src, dst):
+            with tempfile.NamedTemporaryFile(delete=False) as temp:
+                with open(src, 'r') as fo:
+                    while True:
+                        string_stream = fo.read(_stream_packet_size)
+                        if string_stream:
+                            temp.write(string_stream)
+                        else:
+                            break
+                os.rename(temp.name, dst)
+
         def get_server_mtime(self, proto_path):
             return stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
 
-        def get_client_mtime(self, root_path):
+        def get_client_mtime(self, path):
             try:
-                client_mtime = os.stat(root_path).st_mtime
+                client_mtime = os.stat(path).st_mtime
             except OSError as ose:
                 if ose.errno == errno.ENOENT:
                     client_mtime = 0
             return client_mtime
 
-        def get_remote_file(self, root_path, proto_path):
+        def get_remote_file(self, proto_path):
             # TODO: incremental updates with rsync
             temp_filename = None
             with tempfile.NamedTemporaryFile(delete=False) as temp:
@@ -248,6 +260,17 @@ class Xmp(Fuse):
                     temp.write(cont.content)
             return temp_filename
 
+        def update_cache(self, cache_path, server_mtime, proto_path, cache_mtime):
+
+            print '***********************************cache_mtime %s' % cache_mtime
+            if server_mtime > cache_mtime:
+                print '***********************************Fetching from server '
+                temp_filename = self.get_remote_file(proto_path)
+                # keep the client mtime in sync with server due to
+                # network delays
+                os.utime(temp_filename, (os.stat(temp_filename).st_atime, server_mtime))
+                os.rename(temp_filename, cache_path)
+
         def __init__(self, path, flags, *mode):
             # To find whether the file is modified
             self.isModified = False
@@ -255,28 +278,39 @@ class Xmp(Fuse):
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
             proto_path = sankalpa_fs_pb2.Path(path=path)
+            #getting server mtime
             server_mtime = self.get_server_mtime(proto_path)
-            root_path = _full_path(root, path)
+            cache_path = _full_path(root, path)
+            transaction_path = _full_path(transaction_dir, path)
+            cache_mtime = self.get_client_mtime(cache_path)
+            transaction_mtime = self.get_client_mtime(transaction_path)
+
             print '********************************Server_mtime %s' % server_mtime
-            if not os.path.exists(os.path.dirname(root_path)):
-                os.makedirs(os.path.dirname(root_path))
+            #creating dir structures
+            if not os.path.exists(os.path.dirname(cache_path)):
+                os.makedirs(os.path.dirname(cache_path))
+            if not os.path.exists(os.path.dirname(transaction_path)):
+                os.makedirs(os.path.dirname(transaction_path))
+
             if server_mtime != 0:
-                client_mtime = self.get_client_mtime(root_path)
-                print '***********************************client_mtime %s' % client_mtime
-                if server_mtime > client_mtime:
-                    print '***********************************Fetching from server '
-                    temp_filename = self.get_remote_file(root_path, proto_path)
-                    # If the dir path doesnt exsists when the file already exsists.
-                    os.rename(temp_filename, root_path)
-                    # keep the client mtime in sync with server due to
-                    # network delays
-                    os.utime(root_path, (os.stat(root_path).st_atime, server_mtime))
+                #File is available in server
+                self.update_cache(cache_path, server_mtime, proto_path)
             else:
+                #file is not available in server
                 self.isModified = True
-            self.file = os.fdopen(os.open("." + path, flags, *mode),
+                if os.path.exists(transaction_path):
+                    os.remove(transaction_path)
+
+            #Sync cache and transaction
+            if flags != os.O_RDONLY and cache_mtime > transaction_mtime:
+                self.atomic_cp(cache_path, transaction_path)
+
+            #return transaction fd
+            self.file = os.fdopen(os.open(transaction_path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
-            self.root_path = root_path
+            self.cache_path = cache_path
+            self.transaction_path = transaction_path
             self.path = path
 
         def read(self, length, offset):
@@ -293,7 +327,7 @@ class Xmp(Fuse):
             print '********** read_file_contents ************'
             yield sankalpa_fs_pb2.Content(content=self.path)
 
-            with open(self.root_path, 'r') as fo:
+            with open(self.transaction_path, 'r') as fo:
                 while True:
                     string_stream = fo.read(_stream_packet_size)
                     if string_stream:
@@ -305,14 +339,15 @@ class Xmp(Fuse):
             print '********** update_remote_file ************'
             content_iter = self.read_file_contents()
             ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
-            if ack.file_path != self.path or ack.num_bytes != os.stat(self.root_path).st_size:
+            if ack.file_path != self.path or ack.num_bytes != os.stat(self.cache_path).st_size:
                print '********** File Update Error ************'
                raise OSError("File Update Error")
             else:
                 # Setting the mtime in client to reflect the server
                 # This avoid a fetch call after every update
                 print '********** File Update mtime ************'
-                os.utime(self.root_path, (os.stat(self.root_path).st_atime, ack.server_mtime.mtime))
+                os.utime(self.transaction_path, (os.stat(self.transaction_path).st_atime, ack.server_mtime.mtime))
+                os.rename(self.transaction_path, self.cache_path)
 
         def release(self, flags):
             print '********** RELEASE ************'
@@ -396,7 +431,7 @@ class Xmp(Fuse):
 
 def main():
 
-    global stub, mount_point, root
+    global stub, mount_point, root, transaction_dir
 
     channel = implementations.insecure_channel('pc-c220m4-r03-19.wisc.cloudlab.us', 50051)
     stub = sankalpa_fs_pb2.beta_create_SankalpaFS_stub(channel)
@@ -417,6 +452,14 @@ Userspace nullfs-alike: mirror the filesystem tree from some point on.
     mount_point = server.fuse_args.mountpoint
     root = server.root
 
+    transaction_dir = os.path.join(root, '..', '.transactions')
+    try:
+        os.makedirs(transaction_dir)
+    except OSError as ose:
+        if ose.errno == 17:
+            pass
+        else:
+            raise ose
     try:
         if server.fuse_args.mount_expected():
             os.chdir(server.root)
