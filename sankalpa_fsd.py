@@ -37,7 +37,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             if e.errno == errno.ENOENT:
                 mt = 0
         print '********** %s' % mt
-        return sankalpa_fs_pb2.MTime(mtime = 123.0)
+        return sankalpa_fs_pb2.MTime(mtime = mt)
 
     def get_file_contents(self, Path, context):
         print '********** in get_file_contents ************'
