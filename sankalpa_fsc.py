@@ -157,7 +157,7 @@ class Xmp(Fuse):
         print '********** File System truncate ************'
         pid = fuse.FuseGetContext()['pid']
         print '********** File System truncate pid %s ' % pid
-        f = open(_full_path(transaction_dir,path + str(pid) + '.swp' ), "a")
+        f = open(_full_path(transaction_dir,path + '.' + str(pid) + '.swp' ), "a")
         f.truncate(len)
         f.close()
 
@@ -269,12 +269,13 @@ class Xmp(Fuse):
             self.pid = fuse.FuseGetContext()['pid']
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
+            print '***********************************flags %s' % flags
             print '***********************************pid %s' % self.pid
             proto_path = sankalpa_fs_pb2.Path(path=path)
             #getting server mtime
             server_mtime = self.get_server_mtime(proto_path)
             cache_path = _full_path(root, path)
-            transaction_path = _full_path(transaction_dir, path + str(self.pid) + '.swp')
+            transaction_path = _full_path(transaction_dir, path + '.' + str(self.pid) + '.swp')
             cache_mtime = self.get_client_mtime(cache_path)
 
             print '********************************Server_mtime %s' % server_mtime
