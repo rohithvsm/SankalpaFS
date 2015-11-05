@@ -18,6 +18,7 @@ import fcntl
 # pull in some spaghetti to make this stuff work without fuse-py being installed
 import tempfile
 import posix
+import shutil
 
 try:
     import _find_fuse_parts
@@ -229,17 +230,6 @@ class Xmp(Fuse):
 
     class XmpFile(object):
 
-        def atomic_cp(self, src, dst):
-            with tempfile.NamedTemporaryFile(delete=False) as temp:
-                with open(src, 'r') as fo:
-                    while True:
-                        string_stream = fo.read(_stream_packet_size)
-                        if string_stream:
-                            temp.write(string_stream)
-                        else:
-                            break
-                os.rename(temp.name, dst)
-
         def get_server_mtime(self, proto_path):
             return stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
 
@@ -274,23 +264,26 @@ class Xmp(Fuse):
         def __init__(self, path, flags, *mode):
             # To find whether the file is modified
             self.isModified = False
-
+            self.pid = fuse.FuseGetContext()['pid']
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
             proto_path = sankalpa_fs_pb2.Path(path=path)
             #getting server mtime
             server_mtime = self.get_server_mtime(proto_path)
             cache_path = _full_path(root, path)
-            transaction_path = _full_path(transaction_dir, path)
+            transaction_path = _full_path(transaction_dir, path + self.pid + '.swp')
             cache_mtime = self.get_client_mtime(cache_path)
-            transaction_mtime = self.get_client_mtime(transaction_path)
 
             print '********************************Server_mtime %s' % server_mtime
             #creating dir structures
-            if not os.path.exists(os.path.dirname(cache_path)):
+            try:
                 os.makedirs(os.path.dirname(cache_path))
-            if not os.path.exists(os.path.dirname(transaction_path)):
                 os.makedirs(os.path.dirname(transaction_path))
+            except OSError as ose:
+                if ose.errno == 17:
+                    pass
+                else:
+                    raise ose
 
             if server_mtime != 0:
                 #File is available in server
@@ -298,15 +291,15 @@ class Xmp(Fuse):
             else:
                 #file is not available in server
                 self.isModified = True
-                if os.path.exists(transaction_path):
-                    os.remove(transaction_path)
 
-            #Sync cache and transaction
-            if flags != os.O_RDONLY and cache_mtime > transaction_mtime:
-                self.atomic_cp(cache_path, transaction_path)
-
+            if flags != os.O_RDONLY:
             #return transaction fd
-            self.file = os.fdopen(os.open(transaction_path, flags, *mode),
+                self.file = os.fdopen(os.open(cache_path, flags, *mode),
+                                  flag2mode(flags))
+            else:
+                if server_mtime != 0:
+                    shutil.copy(cache_path,transaction_path)
+                self.file = os.fdopen(os.open(transaction_path, flags, *mode),
                                   flag2mode(flags))
             self.fd = self.file.fileno()
             self.cache_path = cache_path
@@ -339,7 +332,7 @@ class Xmp(Fuse):
             print '********** update_remote_file ************'
             content_iter = self.read_file_contents()
             ack = stub.update_file(content_iter, _TIMEOUT_SECONDS)
-            if ack.file_path != self.path or ack.num_bytes != os.stat(self.cache_path).st_size:
+            if ack.file_path != self.path or ack.num_bytes != os.stat(self.transaction_path).st_size:
                print '********** File Update Error ************'
                raise OSError("File Update Error")
             else:
