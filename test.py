@@ -19,6 +19,13 @@ def get_server_mtime(proto_path):
     print '********************************Server_mtime in get server mt %s' % mt
     return mt
 
+def get_client_mtime(self, path):
+            try:
+                client_mtime = os.stat(path).st_mtime
+            except OSError as ose:
+                if ose.errno == errno.ENOENT:
+                    client_mtime = 0
+            return client_mtime
 
 def main():
 
@@ -27,7 +34,12 @@ def main():
     channel = implementations.insecure_channel('pc-c220m4-r03-19.wisc.cloudlab.us', 50051)
     stub = sankalpa_fs_pb2.beta_create_SankalpaFS_stub(channel)
 
-    print get_server_mtime(sankalpa_fs_pb2.Path(path="/start.txt"))
+    s = get_server_mtime(sankalpa_fs_pb2.Path(path="/start.txt"))
+    c = get_client_mtime("/start.txt")
+
+    print s > c
+    print float(s) > float(c)
+
 
 if __name__ == '__main__':
     main()
