@@ -233,7 +233,9 @@ class Xmp(Fuse):
     class XmpFile(object):
 
         def get_server_mtime(self, proto_path):
-            return stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
+            mt = stub.get_mtime(proto_path, _TIMEOUT_SECONDS).mtime
+            print '********************************Server_mtime in get server mt %s' % mt
+            return mt
 
         def get_client_mtime(self, path):
             try:
