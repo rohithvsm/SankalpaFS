@@ -35,7 +35,7 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
             mt = os.stat(_full_path(self.__base_dir, Path.path)).st_mtime
         except OSError, e:
             if e.errno == errno.ENOENT:
-                mt = 0
+                mt = 0.0
         print '********** %s' % mt
         return sankalpa_fs_pb2.MTime(mtime = mt)
 

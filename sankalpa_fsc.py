@@ -250,7 +250,7 @@ class Xmp(Fuse):
         def get_remote_file(self, proto_path):
             # TODO: incremental updates with rsync
             temp_filename = None
-            with tempfile.NamedTemporaryFile(delete=False) as temp:
+            with tempfile.NamedTemporaryFile(delete=False, dir=transaction_dir) as temp:
                 temp_filename = temp.name
                 for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                     temp.write(cont.content)
