@@ -267,6 +267,7 @@ class Xmp(Fuse):
             self.pid = fuse.FuseGetContext()['pid']
             print '****************************************** OPEN'
             print '***********************************Path %s' % path
+            print '***********************************pid %s' % self.pid
             proto_path = sankalpa_fs_pb2.Path(path=path)
             #getting server mtime
             server_mtime = self.get_server_mtime(proto_path)
@@ -288,19 +289,24 @@ class Xmp(Fuse):
             if server_mtime != 0:
                 #File is available in server
                 self.update_cache(cache_path, server_mtime, proto_path, cache_mtime)
+                print '****************************************** Updated cache'
             else:
                 #file is not available in server
                 self.isModified = True
 
             if flags != os.O_RDONLY:
             #return transaction fd
+                print '****************************************** Read only'
                 self.file = os.fdopen(os.open(cache_path, flags, *mode),
                                   flag2mode(flags))
             else:
+                print '****************************************** Not Read only'
                 if server_mtime != 0:
                     shutil.copy(cache_path,transaction_path)
+                    print '****************************************** shutil copy'
                 self.file = os.fdopen(os.open(transaction_path, flags, *mode),
                                   flag2mode(flags))
+            print '****************************************** After fd open'
             self.fd = self.file.fileno()
             self.cache_path = cache_path
             self.transaction_path = transaction_path
