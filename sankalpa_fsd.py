@@ -63,6 +63,8 @@ class SankalpaFSServicer(sankalpa_fs_pb2.BetaSankalpaFSServicer):
                     counter += 1
                     continue
                 temp.write(cont.content)
+            temp.flush()
+            os.fsync(temp.fileno())
             print '********** update_file temp file name %s' % temp.name
         print '********** update_file name %s' % file_path_rel
         file_path = _full_path(self.__base_dir, file_path_rel)

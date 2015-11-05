@@ -19,7 +19,7 @@ import fcntl
 import tempfile
 import posix
 import shutil
-import pdb
+from sys import platform as _platform
 
 try:
     import _find_fuse_parts
@@ -254,6 +254,8 @@ class Xmp(Fuse):
                 temp_filename = temp.name
                 for cont in stub.get_file_contents(proto_path, _TIMEOUT_SECONDS):
                     temp.write(cont.content)
+                temp.flush()
+                os.fsync(temp.fileno())
             return temp_filename
 
         def update_cache(self, cache_path, server_mtime, proto_path, cache_mtime):
@@ -353,6 +355,7 @@ class Xmp(Fuse):
                 # This avoid a fetch call after every update
                 print '********** File Update mtime form server ************ %s' % ack.server_mtime.mtime
                 os.utime(self.transaction_path, (os.stat(self.transaction_path).st_atime, ack.server_mtime.mtime))
+                self.fsync('linux' in _platform.lower())
                 os.rename(self.transaction_path, self.cache_path)
 
         def release(self, flags):
