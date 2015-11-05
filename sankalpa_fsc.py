@@ -155,7 +155,9 @@ class Xmp(Fuse):
 
     def truncate(self, path, len):
         print '********** File System truncate ************'
-        f = open(_full_path(transaction_dir,path), "a")
+        pid = fuse.FuseGetContext()['pid']
+        print '********** File System truncate pid %s ' % pid
+        f = open(_full_path(transaction_dir,path + str(pid) + '.swp' ), "a")
         f.truncate(len)
         f.close()
 
