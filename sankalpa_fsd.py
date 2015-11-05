@@ -165,7 +165,7 @@ def serve():
         while True:
             time.sleep(24 * 60 * 60)
     except KeyboardInterrupt:
-        server.stop()
+        server.stop(1)
 
 if __name__ == '__main__':
     serve()
