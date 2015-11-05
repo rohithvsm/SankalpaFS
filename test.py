@@ -10,7 +10,7 @@
 from grpc.beta import implementations
 import sankalpa_fs_pb2
 
-
+stub = None
 _TIMEOUT_SECONDS = 30
 
 def get_server_mtime(proto_path):
@@ -21,6 +21,11 @@ def get_server_mtime(proto_path):
 
 
 def main():
+
+    global stub, mount_point, root, transaction_dir
+
+    channel = implementations.insecure_channel('pc-c220m4-r03-19.wisc.cloudlab.us', 50051)
+    stub = sankalpa_fs_pb2.beta_create_SankalpaFS_stub(channel)
 
     print get_server_mtime(sankalpa_fs_pb2.Path(path="/start.txt"))
 
