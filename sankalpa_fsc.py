@@ -294,7 +294,7 @@ class Xmp(Fuse):
 
             if server_mtime != 0:
                 #File is available in server
-                self.update_cache(cache_path, server_mtime, proto_path)
+                self.update_cache(cache_path, server_mtime, proto_path, cache_mtime)
             else:
                 #file is not available in server
                 self.isModified = True
