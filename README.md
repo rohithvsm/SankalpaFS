@@ -8,5 +8,5 @@ Distributed File System running as a FUSE implementing AFSv1 protocol using gRPC
 
 ###To Run:
 - ./run_codegen.sh to generate the grpc stub files
-- python sankalpa_fsd.py <path-to-dir>
-- python sankalpa_fsc.py <path-to-mountpoint> <path-to-cache>
+- python sankalpa_fsd.py `path-to-dir`
+- python sankalpa_fsc.py `path-to-mountpoint` `path-to-cache`
